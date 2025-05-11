@@ -1,5 +1,10 @@
 
+use std::str::FromStr;
+
+use chrono::{NaiveTime, Timelike};
 use rust_xlsxwriter::{Format, Worksheet, XlsxBorder,XlsxAlign};
+
+use crate::internal_resources::formats::times_new_yellow;
 
 use super::calendario::Calendario;
 use super::formats;
@@ -62,9 +67,6 @@ fn safe_writing_blank_in_cells (worksheet: &mut Worksheet,row: u32,col:u16,forma
     }
 }
 // ---------------------------------------------------------------------------------//
-
-
-
 pub fn build_static_strings_in_excel (worksheet: &mut Worksheet) {
 
     safe_writing_strings_in_cells(worksheet, 1, 3, "Modulo rilevazione presenza del personale", &formats::times_new_roman_bold_italic());
@@ -75,54 +77,35 @@ pub fn build_static_strings_in_excel (worksheet: &mut Worksheet) {
 
     safe_writing_strings_in_cells(worksheet,1,12,"Mese:",&formats::times_new_roman_italic());
 
-    safe_writing_strings_in_cells(worksheet,7,2,"         Orario Entrata-Uscita", &rust_xlsxwriter::Format::new()
-    .set_bold()
-    .set_font_name("Times New Roman")
-    .set_font_size(10)
-    .set_border_top(XlsxBorder::Medium));
 
-    safe_writing_strings_in_cells(worksheet,8,2,"      Mattina", &rust_xlsxwriter::Format::new()
-    .set_bold()
-    .set_font_name("Times New Roman")
-    .set_font_size(10)
-    .set_border_top(XlsxBorder::Medium));
+    
+    for i in 0..15 {
+    match i {
+        2 => safe_writing_strings_in_cells(worksheet, 7, i, "         Orario Entrata-Uscita", &formats::top_bordered_medium_bold()),
+        14 => safe_writing_blank_in_cells(worksheet, 7, i, &rust_xlsxwriter::Format::new().set_border_top(XlsxBorder::Medium)),
+        _ => safe_writing_blank_in_cells(worksheet, 7, i, &formats::top_bordered_medium_bold()),
+    }
+}
 
-    safe_writing_strings_in_cells(worksheet,8,4,"    Pomeriggio", &rust_xlsxwriter::Format::new()
-    .set_bold()
-    .set_font_name("Times New Roman")
-    .set_font_size(10)
-    .set_border_top(XlsxBorder::Medium));
 
-    //safe_writing_strings_in_cells(worksheet,9,0,"GG",)
+
+
 
     for i in 0..14 {
     safe_writing_blank_in_cells(worksheet,9 , i, &Format::new().set_border_bottom(XlsxBorder::Medium));
     }
 
-    let intestazioni: [&str; 9] = ["Ore", "Straor.", "Ferie","Perm","Fest.","Recupero","Malat","Sede","N O T E"];
-    let mut i :u16= 6;
+    let intestazioni: [&str; 13] = ["Mattina","","Pomeriggio","","Ore", "Straor.", "Ferie","Perm","Fest.","Recupero","Malat","Sede","N O T E"];
+    let mut i :u16= 2;
     for intestazione in intestazioni{
-        if i==14{
-            safe_writing_strings_in_cells(worksheet,8,i,intestazione, &rust_xlsxwriter::Format::new()
-            .set_align(XlsxAlign::Center)
-            .set_bold()
-            .set_font_name("Times New Roman")
-            .set_font_size(10)
-            .set_border_top(XlsxBorder::Thin)
-            .set_border_left(XlsxBorder::Thin)
-            .set_border_bottom(XlsxBorder::Thin)
-            .set_border_right(XlsxBorder::Thin));
-        }
-        else{
-            safe_writing_strings_in_cells(worksheet,8,i,intestazione, &rust_xlsxwriter::Format::new()
-                .set_bold()
-                .set_font_name("Times New Roman")
-                .set_font_size(10)
-                .set_border_top(XlsxBorder::Thin)
-                .set_border_left(XlsxBorder::Thin)
-                .set_border_bottom(XlsxBorder::Thin)
-                .set_border_right(XlsxBorder::Thin));
-        }
+        match i {
+    14 => {
+        safe_writing_strings_in_cells(worksheet,8,i,intestazione,&formats::centered_text_bold());
+    }
+    _ => {
+        safe_writing_strings_in_cells(worksheet, 8, i, intestazione, &formats::borded_bold_text(10));
+    }
+}
     i+=1;
     }
 
@@ -130,13 +113,15 @@ pub fn build_static_strings_in_excel (worksheet: &mut Worksheet) {
     .set_bold()
     .set_font_name("Times New Roman")
     .set_font_size(10)
-    .set_border_top(XlsxBorder::Medium));
+    .set_border_top(XlsxBorder::Thin)
+    .set_border_bottom(XlsxBorder::Thin));
 
     safe_writing_strings_in_cells(worksheet,8,7,"Straor.", &rust_xlsxwriter::Format::new()
     .set_bold()
     .set_font_name("Times New Roman")
     .set_font_size(10)
-    .set_border_top(XlsxBorder::Medium));
+    .set_border_top(XlsxBorder::Thin)
+    .set_border_bottom(XlsxBorder::Thin));
 
     
     
@@ -146,8 +131,11 @@ pub fn colored_yellow_if_checked(worksheet: &mut Worksheet, row: u32, col: u16, 
     match string {
         "sabato" | "domenica" => {
             safe_writing_strings_in_cells(worksheet,row, col, string, &formats::times_new_yellow());
-            for k in 2..14{
+            for k in 2..15{
                 safe_writing_blank_in_cells(worksheet, row, k, &formats::times_new_yellow());
+                if k==14{
+                    safe_writing_blank_in_cells(worksheet, row, k, &formats::times_new_yellow().set_border_right(XlsxBorder::Medium))
+                }
             }
         }
         _ => {
@@ -155,5 +143,60 @@ pub fn colored_yellow_if_checked(worksheet: &mut Worksheet, row: u32, col: u16, 
         }
     }
 // ---------------------------------------------------------------------------------//
+}
+// ---------------------------------------------------------------------------------//
+pub fn build_top_lines (worksheet:&mut Worksheet) {
+    let top_intestazioni: [&str; 15] = ["GG", "", "Ent.","Usc.","Ent.","Usc.","Tot. gg","","","","","","","",""];
+    let mut l = 0;
+    for top_intestazione in top_intestazioni {
+        match l {
+           0 => {
+            print!("{}", top_intestazione);
+            safe_writing_strings_in_cells(worksheet, 9, l, top_intestazione, &formats::times_new_yellow_centered_bold(8));
+           }
+           1=> {
+            safe_writing_strings_in_cells(worksheet, 9, l, top_intestazione,&formats::borded_bold_text_bottom_medium (10));
+           }
+           14=>{
+            let format = rust_xlsxwriter::Format::new().set_font_name("Times New Roman").set_bold().set_font_size(10).set_border_bottom(XlsxBorder::Medium).set_border_left(XlsxBorder::Thin);
+            safe_writing_strings_in_cells(worksheet, 9 , l, top_intestazione, &format);
 
+           }
+           _=> {
+            safe_writing_strings_in_cells(worksheet, 9 , l, top_intestazione, &formats::borded_bold_text_bottom_medium (10));
+           }
+        }
+        l+=1
+    }
+}
+// ---------------------------------------------------------------------------------//
+fn time_to_excel(time_str: &str) -> Result<f64, chrono::ParseError> {
+    let time = NaiveTime::from_str(time_str)?;
+    let hours = time.hour() as f64;
+    let minutes = time.minute() as f64;
+    Ok((hours + minutes / 60.0) / 24.0)
+}
+
+fn calculate_time_difference(first_cell: f64, second_cell: f64, third_cell: f64, fourth_cell: f64) -> String {
+    let result = if first_cell == 0.0 {
+        if second_cell == 0.0 {
+            0.0
+        } else {
+            second_cell - third_cell
+        }
+    } else {
+        if second_cell == 0.0 {
+            first_cell - fourth_cell
+        } else {
+            (first_cell - fourth_cell) + (second_cell - third_cell)
+        }
+    };
+
+    let result_in_hours = result * 24.0;
+
+    if result_in_hours == 0.0 {
+        " ".to_string()
+    } else {
+        result_in_hours.to_string()
+    }
 }
