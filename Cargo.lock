@@ -78,6 +78,7 @@ name = "compilazione_auto_ts"
 version = "0.1.0"
 dependencies = [
  "chrono",
+ "once_cell",
  "rust_xlsxwriter",
 ]
 
