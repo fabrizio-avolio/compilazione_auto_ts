@@ -9,8 +9,8 @@ pub fn times_new_roman_bold_italic() -> Format {
 pub fn times_new_roman_italic_with_font(font: i32) -> Format {
     rust_xlsxwriter::Format::new()
         .set_italic()
-        .set_font_name("Times New Roman")
         .set_font_size(font)
+        .set_font_name("Times New Roman")
 }
 
 pub fn times_new_centered() -> Format {
@@ -42,10 +42,10 @@ pub fn times_new_roman_italic() -> Format {
 
 pub fn times_new_roman_bold_underline() -> Format {
     rust_xlsxwriter::Format::new()
-        .set_underline(rust_xlsxwriter::FormatUnderline::Single) // Specifica il tipo di sottolineatura
+        .set_underline(rust_xlsxwriter::FormatUnderline::Single)
         .set_font_name("Times New Roman")
         .set_font_size(13)
-        .set_bold() // Aggiunge lo stile grassetto
+        .set_bold()
 }
 
 pub fn times_new_yellow_centered_bold(font: i32) -> Format {
@@ -132,12 +132,4 @@ pub fn top_bordered_medium_bold() -> Format {
         .set_border_top(FormatBorder::Medium)
         .set_border_right(FormatBorder::Thin)
         .set_border_left(FormatBorder::Thin)
-}
-pub fn bordered_no_left() -> Format {
-    rust_xlsxwriter::Format::new()
-        .set_font_name("Times New Roman")
-        .set_font_size(10)
-        .set_border_bottom(FormatBorder::Thin)
-        .set_border_top(FormatBorder::Thin)
-        .set_border_right(FormatBorder::Thin)
 }

@@ -1,7 +1,9 @@
-use rust_xlsxwriter::{Format, FormatAlign, FormatBorder, Worksheet};
+use std::collections::HashMap;
 
-use super::calendario::Calendario;
-use super::formats;
+use rust_xlsxwriter::{Format, FormatAlign, FormatBorder, FormatUnderline, Worksheet};
+
+use super::calendario::{Calendario, GiornoCalendario};
+use super::{file_handling, formats};
 
 //-------CONST-------//
 const SIZE_ERROR: &str = "Errore impostando la larghezza: ";
@@ -55,10 +57,38 @@ const GIORNI_ROSSI_FISSI: [Festa; 10] = [
     },
 ];
 
+pub struct UtilityDays {
+    giorno_pasqua: String,
+    giorni_settimana_for_check: HashMap<&'static str, u8>,
+}
+
+impl UtilityDays {
+    fn get_utility_days(calendario: &Calendario) -> Self {
+        let giorno_pasqua = calcola_pasqua(&calendario.anno);
+
+        let giorni_settimana_for_check: HashMap<&'static str, u8> = [
+            ("lunedì", 1),
+            ("martedì", 2),
+            ("mercoledì", 3),
+            ("giovedì", 4),
+            ("venerdì", 5),
+            ("sabato", 6),
+            ("domenica", 7),
+        ]
+        .iter()
+        .cloned()
+        .collect();
+
+        UtilityDays {
+            giorno_pasqua,
+            giorni_settimana_for_check,
+        }
+    }
+}
 // ---------------------------------------------------------------------------------//
 pub(crate) fn costruisci_gg_nome_gg(worksheet: &mut Worksheet, calendario: &Calendario) {
     let mut i: u32 = 10;
-    let giorno_pasqua = calcola_pasqua(calendario.anno);
+    
     for giorno in &calendario.giorni {
         safe_writing_strings_in_cells(
             worksheet,
@@ -71,10 +101,10 @@ pub(crate) fn costruisci_gg_nome_gg(worksheet: &mut Worksheet, calendario: &Cale
             worksheet,
             i,
             1,
-            &giorno.giorno_settimana.to_string(),
-            &giorno.giorno.to_string(),
+            giorno,
             calendario.mese,
-            giorno_pasqua.as_str(),
+            &UtilityDays::get_utility_days(calendario),
+            file_handling::Utente::get_utente_from_json().giorni_sede,
         );
         i += 1;
     }
@@ -87,33 +117,33 @@ pub(crate) fn costruisci_gg_nome_gg(worksheet: &mut Worksheet, calendario: &Cale
         "=SUM(L11:L{})",
         "=SUM(M11:M{})",
     ];
-    let mut k = 0;
-    for formula in formule {
+    for (k,formula) in formule.iter().enumerate() {
         let new_formula = formula.replace("{}", &i.to_string());
         match k {
             0 => {
                 let _ = worksheet.write_formula_with_format(
-                    i as u32,
+                    i,
                     (6 + k).try_into().unwrap(),
-                    &rust_xlsxwriter::Formula::new(&new_formula),
-                    &formats::times_new_green_borded().set_bold(),
+                    rust_xlsxwriter::Formula::new(&new_formula),
+                    &formats::times_new_green_borded()
+                        .set_bold()
+                        .set_num_format("0.00"),
                 );
             }
             _ => {
                 let _ = worksheet.write_formula_with_format(
-                    i as u32,
+                    i,
                     (6 + k).try_into().unwrap(),
-                    &rust_xlsxwriter::Formula::new(&new_formula),
-                    &formats::borded_bold_text(10),
+                    rust_xlsxwriter::Formula::new(&new_formula),
+                    &formats::borded_bold_text(10).set_num_format("0.00"),
                 );
             }
         }
-        k += 1;
     }
     let somme: [&str; 8] = ["G{}", "H{}", "I{}", "J{}", "K{}", "L{}", "M{}", "N{}"];
     let mut somma_tot: String = String::new();
     for cella in somme {
-        somma_tot.push_str("+");
+        somma_tot.push('+');
         let updated_cella = cella.replace("{}", &(i + 1).to_string());
         somma_tot.push_str(&updated_cella);
     }
@@ -129,8 +159,8 @@ pub(crate) fn costruisci_gg_nome_gg(worksheet: &mut Worksheet, calendario: &Cale
     let _ = worksheet.write_formula_with_format(
         i + 2,
         5,
-        &rust_xlsxwriter::Formula::new(&somma_tot),
-        &formats::times_new_centered_bolded(),
+        rust_xlsxwriter::Formula::new(&somma_tot),
+        &formats::times_new_centered_bolded().set_num_format("0.00"),
     );
 }
 // ---------------------------------------------------------------------------------//
@@ -241,7 +271,9 @@ pub fn build_static_strings_in_excel(worksheet: &mut Worksheet) {
         );
     }
 
-    let intestazioni: [&str; 13] = [
+    let intestazioni: [&str; 15] = [
+        "",
+        "",
         "Mattina",
         "",
         "Pomeriggio",
@@ -256,32 +288,51 @@ pub fn build_static_strings_in_excel(worksheet: &mut Worksheet) {
         "Sede",
         "N O T E",
     ];
-    let mut i: u16 = 2;
-    for intestazione in intestazioni {
+    for (i, intestazione) in intestazioni.iter().enumerate() {
         match i {
-            2=>{
+            2 => {
                 safe_writing_strings_in_cells(
                     worksheet,
                     8,
-                    i,
+                    i as u16,
                     intestazione,
-                    &formats::centered_text_bold(),
+                    &formats::centered_text_bold()
+                        .set_border_left(FormatBorder::Thin)
+                        .set_font_size(10),
                 );
             }
+
             3 => {
                 safe_writing_strings_in_cells(
                     worksheet,
                     8,
-                    i,
+                    i as u16,
                     intestazione,
-                    &formats::bordered_no_left(),
+                    &rust_xlsxwriter::Format::new()
+                        .set_border_bottom(FormatBorder::Thin)
+                        .set_border_top(FormatBorder::Thin),
+                );
+            }
+            5 => {
+                safe_writing_strings_in_cells(
+                    worksheet,
+                    8,
+                    i as u16,
+                    intestazione,
+                    &rust_xlsxwriter::Format::new()
+                        .set_font_name("Times New Roman")
+                        .set_border_bottom(FormatBorder::Thin)
+                        .set_border_top(FormatBorder::Thin)
+                        .set_border_left(FormatBorder::Thin)
+                        .set_bold()
+                        .set_align(FormatAlign::Center),
                 );
             }
             14 => {
                 safe_writing_strings_in_cells(
                     worksheet,
                     8,
-                    i,
+                    i as u16,
                     intestazione,
                     &formats::centered_text_bold().set_border_right(FormatBorder::Medium),
                 );
@@ -290,58 +341,35 @@ pub fn build_static_strings_in_excel(worksheet: &mut Worksheet) {
                 safe_writing_strings_in_cells(
                     worksheet,
                     8,
-                    i,
+                    i as u16,
                     intestazione,
                     &formats::borded_bold_text(10),
                 );
             }
         }
-        i += 1;
     }
-
-    safe_writing_strings_in_cells(
-        worksheet,
-        8,
-        6,
-        "Ore",
-        &rust_xlsxwriter::Format::new()
-            .set_bold()
-            .set_font_name("Times New Roman")
-            .set_font_size(10)
-            .set_border_top(FormatBorder::Thin)
-            .set_border_bottom(FormatBorder::Thin),
-    );
-
-    safe_writing_strings_in_cells(
-        worksheet,
-        8,
-        7,
-        "Straor.",
-        &rust_xlsxwriter::Format::new()
-            .set_bold()
-            .set_font_name("Times New Roman")
-            .set_font_size(10)
-            .set_border_top(FormatBorder::Thin)
-            .set_border_bottom(FormatBorder::Thin),
-    );
 }
 // ---------------------------------------------------------------------------------//
 pub fn colored_yellow_if_checked(
     worksheet: &mut Worksheet,
     row: u32,
     col: u16,
-    giorno_settimana: &str,
-    giorno: &str,
+    giorno: &GiornoCalendario,
     mese: &str,
-    giorno_pasqua: &str,
+    utility_days: &UtilityDays,
+    giorni_sede: Vec<u8>,
 ) {
+    let giorno_settimana = giorno.giorno_settimana;
+    let giorno = giorno.giorno;
+    let giorno_pasqua = &utility_days.giorno_pasqua;
+    let giorni_settimana_for_check = &utility_days.giorni_settimana_for_check;
     let red_day = format!("{} {}", giorno, mese);
     if giorno_settimana == "sabato"
         || giorno_settimana == "domenica"
         || GIORNI_ROSSI_FISSI
             .iter()
             .any(|festa| festa.nome == red_day.as_str())
-        || red_day == giorno_pasqua
+        || red_day == *giorno_pasqua
     {
         safe_writing_strings_in_cells(
             worksheet,
@@ -357,14 +385,26 @@ pub fn colored_yellow_if_checked(
                 if giorno_settimana == "sabato" || giorno_settimana == "domenica" {
                     format = format.set_border_right(FormatBorder::Medium);
                     safe_writing_blank_in_cells(worksheet, row, k, &format);
-                } else if red_day == giorno_pasqua {
-                    format = format.set_border_right(FormatBorder::Medium).set_align(FormatAlign::Center).set_bold();
-                    safe_writing_strings_in_cells(worksheet, row, k, "Pasqua di Resurrezione", &format);
+                } else if red_day == *giorno_pasqua {
+                    format = format
+                        .set_border_right(FormatBorder::Medium)
+                        .set_align(FormatAlign::Center)
+                        .set_bold();
+                    safe_writing_strings_in_cells(
+                        worksheet,
+                        row,
+                        k,
+                        "Pasqua di Resurrezione",
+                        &format,
+                    );
                 } else if let Some(festa) = GIORNI_ROSSI_FISSI
                     .iter()
                     .find(|festa| festa.nome == red_day.as_str())
                 {
-                    format = format.set_border_right(FormatBorder::Medium).set_align(FormatAlign::Center).set_bold();
+                    format = format
+                        .set_border_right(FormatBorder::Medium)
+                        .set_align(FormatAlign::Center)
+                        .set_bold();
                     safe_writing_strings_in_cells(worksheet, row, k, festa.descrizione, &format);
                 } else {
                     safe_writing_blank_in_cells(worksheet, row, k, &format);
@@ -388,29 +428,29 @@ pub fn colored_yellow_if_checked(
             worksheet,
             row,
             col + 1,
-            "08:30:00",
-            &formats::borded_normal_text(10),
+            "08:30",
+            &formats::borded_normal_text(10).set_align(FormatAlign::Center),
         );
         safe_writing_strings_in_cells(
             worksheet,
             row,
             col + 2,
-            "13:00:00",
-            &formats::borded_normal_text(10),
+            "13:00",
+            &formats::borded_normal_text(10).set_align(FormatAlign::Center),
         );
         safe_writing_strings_in_cells(
             worksheet,
             row,
             col + 3,
-            "14:00:00",
-            &formats::borded_normal_text(10),
+            "14:00",
+            &formats::borded_normal_text(10).set_align(FormatAlign::Center),
         );
         safe_writing_strings_in_cells(
             worksheet,
             row,
             col + 4,
-            "17:30:00",
-            &formats::borded_normal_text(10),
+            "17:30",
+            &formats::borded_normal_text(10).set_align(FormatAlign::Center),
         );
         let formula = generate_formula(row, col + 5);
         let formula_converted = rust_xlsxwriter::Formula::new(formula);
@@ -418,7 +458,7 @@ pub fn colored_yellow_if_checked(
             row,
             col + 5,
             formula_converted,
-            &formats::borded_bold_text(10),
+            &formats::borded_bold_text(10).set_num_format("0.00"),
         );
         for k in 7..15 {
             safe_writing_blank_in_cells(worksheet, row, k, &formats::borded_normal_text(10));
@@ -429,6 +469,27 @@ pub fn colored_yellow_if_checked(
                     k,
                     &formats::borded_no_right().set_border_right(FormatBorder::Medium),
                 )
+            }
+            if k == 13 {
+                if let Some(val) = giorni_settimana_for_check.get(giorno_settimana) {
+                    if giorni_sede.contains(val) {
+                        safe_writing_strings_in_cells(
+                            worksheet,
+                            row,
+                            k,
+                            "SI",
+                            &formats::borded_bold_text(10).set_align(FormatAlign::Center),
+                        );
+                    } else {
+                        safe_writing_strings_in_cells(
+                            worksheet,
+                            row,
+                            k,
+                            "NO",
+                            &formats::borded_bold_text(10).set_align(FormatAlign::Center),
+                        );
+                    }
+                }
             }
         }
     }
@@ -531,7 +592,7 @@ fn generate_formula(row: u32, col: u16) -> String {
     )
 }
 // ---------------------------------------------------------------------------------//
-fn calcola_pasqua(anno: i32) -> String {
+fn calcola_pasqua(anno: &i32) -> String {
     let a = anno % 19;
     let b = anno / 100;
     let c = anno % 100;
@@ -564,3 +625,42 @@ fn calcola_pasqua(anno: i32) -> String {
 
     format!("{} {}", giorno, nomi_mesi[(mese - 1) as usize])
 }
+
+pub fn build_month_and_year(worksheet: &mut Worksheet, calendario: &Calendario) {
+    safe_writing_strings_in_cells(
+        worksheet,
+        1,
+        14,
+        &format!("{} {}", calendario.mese, calendario.anno),
+        &formats::times_new_roman_bold_underline(),
+    );
+}
+pub fn write_nominativo_and_cliente(worksheet: &mut Worksheet) {
+    safe_writing_strings_in_cells(
+        worksheet,
+        4,
+        5,
+        &file_handling::Utente::get_utente_from_json().cliente,
+        &rust_xlsxwriter::Format::new()
+            .set_underline(rust_xlsxwriter::FormatUnderline::Single)
+            .set_font_name("Times New Roman")
+            .set_font_size(12)
+            .set_bold()
+            .set_align(FormatAlign::Bottom)
+            .set_underline(FormatUnderline::Single),
+    );
+
+    safe_writing_strings_in_cells(
+        worksheet,
+        5,
+        5,
+        &file_handling::Utente::get_utente_from_json().nominativo,
+        &formats::times_new_roman_italic()
+            .set_align(FormatAlign::Bottom)
+            .set_underline(FormatUnderline::Single),
+    );
+}
+// ---------------------------------------------------------------------------------//
+
+
+
