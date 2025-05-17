@@ -2,7 +2,7 @@ use chrono::{Local, Datelike, NaiveDate, Weekday};
 
 const DATA_NON_VALIDA: &str = "DATA NON VALIDA";
 #[derive(Debug)]
-pub struct GiornoCalendario<'a, > {
+pub struct GiornoCalendario<'a> {
     pub giorno: u32,
     pub giorno_settimana: &'a str,
 }

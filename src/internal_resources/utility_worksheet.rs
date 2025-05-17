@@ -625,7 +625,7 @@ fn calcola_pasqua(anno: &i32) -> String {
 
     format!("{} {}", giorno, nomi_mesi[(mese - 1) as usize])
 }
-
+//-------------------------------------------//
 pub fn build_month_and_year(worksheet: &mut Worksheet, calendario: &Calendario) {
     safe_writing_strings_in_cells(
         worksheet,
@@ -635,6 +635,7 @@ pub fn build_month_and_year(worksheet: &mut Worksheet, calendario: &Calendario) 
         &formats::times_new_roman_bold_underline(),
     );
 }
+//-------------------------------------------//
 pub fn write_nominativo_and_cliente(worksheet: &mut Worksheet) {
     safe_writing_strings_in_cells(
         worksheet,

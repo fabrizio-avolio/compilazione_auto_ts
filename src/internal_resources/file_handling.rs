@@ -5,6 +5,8 @@ use std::path::Path;
 use std::path::PathBuf;
 use rfd::MessageDialog;
 use rfd::MessageLevel;
+
+//--------- Costanti ---------//
 const FILE_NAME: &str = "dati_utente.json";
 const DIR_NAME: &str = "TS_compiler";
 const DEFAULT_NOMINATIVO: &str = "inserire tuo nominativo in dati_utente.json";
@@ -15,8 +17,9 @@ const DESERIALIZATION_ERROR: &str = "Errore nella deserializzazione del JSON";
 const READ_ERROR: &str = "Errore nella lettura del file JSON";
 const DAYS_ERROR: &str = "Errore : Il vettore giorni_sede all'interno del json contiene un numero maggiore di 5 o più di 5 elementi.";
 const TITLE_ERROR: &str = "Errore nella valorizzazione dei giorni sede";
-//const ERROR_FILE_EXISTS: &str = "Il file esiste già, non verrà sovrascritto.";
 
+
+//--------- Struct e Impl ---------//
 #[derive(Serialize,Deserialize)]
 pub struct Utente {
     pub nominativo: String,
@@ -30,12 +33,12 @@ impl Utente {
         serde_json::from_str(&contents).expect(DESERIALIZATION_ERROR)
     }
 }
-
+//-------------------------------------------//
 pub fn get_file_path (anno:i32,mese:&str) -> String {
         let dir_path = PathBuf::from(DIR_NAME).to_string_lossy().to_string();
         format!("{}/{}",dir_path,handle_file_creation(anno, mese))
     }
-
+//-------------------------------------------//
 pub fn handle_file_creation(anno:i32,mese:&str) -> String{
     let dir_path = Path::new(DIR_NAME);
     let file_path = dir_path.join(FILE_NAME);
@@ -63,7 +66,7 @@ pub fn handle_file_creation(anno:i32,mese:&str) -> String{
 
     format!("TS_{}_{}_{}.xlsx",dati.nominativo.replace(' ', "_"),mese,anno)
 }
-
+//-------------------------------------------//
 pub fn check_giorni_sede(dati: &[u8]) {
     if dati.iter().any(|&x| x > 5) || dati.len() > 5 {
         MessageDialog::new()
@@ -74,6 +77,7 @@ pub fn check_giorni_sede(dati: &[u8]) {
         std::process::exit(1);
     }
 }
+//-------------------------------------------//
 pub fn file_creato() {
         MessageDialog::new()
             .set_title("File creato")
@@ -97,6 +101,7 @@ fn write_in_file(file_path: &str, json_string: &str) {
         }
     }
 }
+//-------------------------------------------//
 pub fn safe_save_workbook(workbook: &mut rust_xlsxwriter::Workbook, nome_file: &str) {
     match workbook.save(nome_file) {
         Ok(_) => (),
@@ -112,3 +117,4 @@ pub fn safe_save_workbook(workbook: &mut rust_xlsxwriter::Workbook, nome_file: &
         }
     }
 }
+//-------------------------------------------//
