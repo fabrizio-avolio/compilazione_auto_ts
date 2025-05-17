@@ -7,6 +7,7 @@ pub struct GiornoCalendario<'a> {
     pub giorno_settimana: &'a str,
 }
 
+#[derive(Debug)]
 pub struct Calendario<'a> {
     pub anno: i32,
     pub mese: &'a str,

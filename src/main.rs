@@ -14,8 +14,6 @@ fn main() -> Result<(), XlsxError> {
     let calendario = calendario::Calendario::new();
     worksheet.write_string_with_format(1, 14, &format!("{} {}", calendario.mese, calendario.anno), &formats::times_new_roman_bold_underline())?;
 
-    //-----Costruzione dei bordi-----//
-    //worksheet.write_blank(10, 10, &formats::set_border_top//())?;
 
     //-----Costruzione Dinamica del mese----//
     utility_worksheet::costruisci_gg_nome_gg(worksheet, &calendario);

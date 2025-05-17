@@ -133,3 +133,11 @@ pub fn top_bordered_medium_bold() -> Format {
         .set_border_right(FormatBorder::Thin)
         .set_border_left(FormatBorder::Thin)
 }
+pub fn bordered_no_left() -> Format {
+    rust_xlsxwriter::Format::new()
+        .set_font_name("Times New Roman")
+        .set_font_size(10)
+        .set_border_bottom(FormatBorder::Thin)
+        .set_border_top(FormatBorder::Thin)
+        .set_border_right(FormatBorder::Thin)
+}
