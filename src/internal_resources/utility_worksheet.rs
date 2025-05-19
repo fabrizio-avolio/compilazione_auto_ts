@@ -461,7 +461,7 @@ pub fn colored_yellow_if_checked(
             &formats::borded_bold_text(10).set_num_format("0.00"),
         );
         for k in 7..15 {
-            safe_writing_blank_in_cells(worksheet, row, k, &formats::borded_normal_text(10));
+            safe_writing_blank_in_cells(worksheet, row, k, &formats::borded_normal_text(10).set_num_format("0.00").set_bold());
             if k == 14 {
                 safe_writing_blank_in_cells(
                     worksheet,
