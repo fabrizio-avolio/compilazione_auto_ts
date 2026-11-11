@@ -1,3 +1,6 @@
+// Release builds on Windows run without opening a console window.
+#![cfg_attr(all(windows, not(debug_assertions)), windows_subsystem = "windows")]
+
 use internal_resources::{calendario, file_handling,utility_worksheet};
 use rust_xlsxwriter::{Workbook, XlsxError};
 mod internal_resources;
