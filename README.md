@@ -1,5 +1,6 @@
 # Compilazione Auto TS — Automatic Timesheet Generator
 
+[![Release](https://img.shields.io/github/v/release/fabrizio-avolio/compilazione_auto_ts)](https://github.com/fabrizio-avolio/compilazione_auto_ts/releases/latest)
 ![Rust](https://img.shields.io/badge/Rust-2024_edition-orange?logo=rust)
 ![Excel](https://img.shields.io/badge/output-.xlsx-217346?logo=microsoftexcel&logoColor=white)
 ![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey)
@@ -52,27 +53,36 @@ review the file and send it.
 
 ## Getting started
 
-### Prerequisites
+### Download
 
-- [Rust](https://www.rust-lang.org/tools/install) **1.85 or newer** (the crate uses the 2024 edition)
+Pre-built executables are available on the
+[**Releases page**](https://github.com/fabrizio-avolio/compilazione_auto_ts/releases/latest):
 
-### Build
+| Platform              | File                                        |
+| --------------------- | ------------------------------------------- |
+| Windows (x64)         | `compilazione_auto_ts-<version>-windows-x64.exe` |
+| macOS (Apple Silicon) | `compilazione_auto_ts-<version>-macos-arm64.tar.gz` |
+| Linux (x64)           | `compilazione_auto_ts-<version>-linux-x64.tar.gz` |
+
+On Windows, put the `.exe` in a folder of its own and double-click it: the `TS_compiler/` folder is created
+next to it. On macOS and Linux, extract the archive and run the binary from a terminal inside that folder.
+
+> The executables are not code-signed. Windows SmartScreen may show a warning: choose
+> **More info → Run anyway**. On macOS, allow the app under **System Settings → Privacy & Security**.
+
+### Build from source
+
+Requires [Rust](https://www.rust-lang.org/tools/install) **1.85 or newer** (the crate uses the 2024 edition).
 
 ```bash
-git clone https://github.com/Royalexperience/compilazione_auto_ts.git
+git clone https://github.com/fabrizio-avolio/compilazione_auto_ts.git
 cd compilazione_auto_ts
 cargo build --release
 ```
 
-The executable is created in `target/release/`.
+The executable is created in `target/release/`. You can also build and run in one step with `cargo run --release`.
 
-### Run
-
-```bash
-cargo run --release
-```
-
-or simply double-click the compiled executable.
+### First run
 
 On the **first run** the tool creates the `TS_compiler/` folder in the current working directory, containing a
 `dati_utente.json` template. Fill it in with your details and run the tool again.
@@ -149,4 +159,4 @@ compilazione_auto_ts/
 
 ## Author
 
-**Fabrizio Avolio** — [GitHub](https://github.com/Royalexperience)
+**Fabrizio Avolio** — [GitHub](https://github.com/fabrizio-avolio)
