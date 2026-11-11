@@ -1,0 +1,81 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+env:
+  BIN_NAME: compilazione_auto_ts
+
+jobs:
+  build:
+    name: Build (${{ matrix.label }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            label: windows-x64
+          - os: macos-latest
+            target: aarch64-apple-darwin
+            label: macos-arm64
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            label: linux-x64
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Install Linux dependencies
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y libgtk-3-dev
+
+      - name: Build
+        run: cargo build --release --locked --target ${{ matrix.target }}
+
+      - name: Package
+        shell: bash
+        run: |
+          version="${GITHUB_REF_NAME}"
+          [[ "$version" == v* ]] || version="dev-${GITHUB_SHA::7}"
+          out="dist/${BIN_NAME}-${version}-${{ matrix.label }}"
+          mkdir -p dist
+          if [[ "$RUNNER_OS" == "Windows" ]]; then
+            cp "target/${{ matrix.target }}/release/${BIN_NAME}.exe" "${out}.exe"
+          else
+            tar -czf "${out}.tar.gz" -C "target/${{ matrix.target }}/release" "${BIN_NAME}"
+          fi
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.label }}
+          path: dist/*
+
+  release:
+    name: Publish release
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+
+      - name: Generate checksums
+        run: cd dist && sha256sum * > SHA256SUMS.txt
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          draft: true
+          files: dist/*
